@@ -1,7 +1,8 @@
 # Hasil Build Java
-.class
+*.class
+bin/
+out/
+build/
 
 # Folder Dokumentasi
 docs/
-
-
