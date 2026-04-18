@@ -1,78 +1,112 @@
 package main;
 
 import java.time.LocalDate;
+import java.util.Scanner;
 
 import models.Book;
 import models.Member;
-import models.Librarian;
 import services.Library;
 
 public class Main {
   public static void main(String[] args) {
-    System.out.println("=== Inisialisasi Sistem Manajemen Perpustakaan ===");
+    System.out.println("=== Sistem Manajemen Perpustakaan ===");
 
     Library library = new Library();
+    Scanner scanner = new Scanner(System.in);
 
-    // 1. Menambahkan Pustakawan (Demonstrasi Inheritance & Encapsulation)
-    Librarian librarian = new Librarian("Budi Santoso", "L-001", "EMP-101", "Kepala Perpustakaan");
-    System.out.println("Pustakawan Bertugas: " + librarian.getName() + " - " + librarian.getPosition());
+    // Load atau seed data
+    if (library.isBooksEmpty() || library.isMembersEmpty()) {
+      seedData(library);
+    }
 
-    // 2. Menambahkan Buku
-    System.out.println("\nMenambahkan Koleksi Buku...");
-    Book book1 = new Book("B-001", "Pemrograman Java", "John Doe", "Teknologi", 3);
-    Book book2 = new Book("B-002", "Algoritma dan Struktur Data", "Jane Smith", "Teknologi", 1);
-    Book book3 = new Book("B-003", "Desain Database", "Bob Brown", "Teknologi", 0); // Stok kosong untuk testing
-    library.addBook(book1);
-    library.addBook(book2);
-    library.addBook(book3);
+    // Menu Utama
+    int pilihan;
+    do {
+      System.out.println("\n--- Menu ---");
+      System.out.println("1. Tambah Buku");
+      System.out.println("2. Tambah Member");
+      System.out.println("3. Peminjaman Buku");
+      System.out.println("4. Pengembalian Buku");
+      System.out.println("5. Lihat Status");
+      System.out.println("0. Keluar");
+      System.out.print("Pilih: ");
+      pilihan = scanner.nextInt();
+      scanner.nextLine();
 
-    // 3. Menambahkan Member
-    System.out.println("Menambahkan Anggota...");
-    Member member1 = new Member("Andi", "M-001", "20230001");
-    Member member2 = new Member("Siti", "M-002", "20230005");
-    Member member3 = new Member("Agus", "M-003", "20230008");
+      switch (pilihan) {
+        case 1:
+          tambahBuku(scanner, library);
+          break;
+        case 2:
+          tambahMember(scanner, library);
+          break;
+        case 3:
+          peminjaman(scanner, library);
+          break;
+        case 4:
+          pengembalian(scanner, library);
+          break;
+        case 5:
+          library.printLibraryStatus();
+          break;
+      }
+    } while (pilihan != 0);
 
-    library.addMember(member1);
-    library.addMember(member2);
-    library.addMember(member3);
+    System.out.println("Terima kasih!");
+  }
 
-    // Print Status Awal
-    library.printLibraryStatus();
+  private static void seedData(Library library) {
+    library.addBook(new Book("B-001", "Pemrograman Java", "John Doe", "Teknologi", 3));
+    library.addBook(new Book("B-002", "Algoritma dan Struktur Data", "Jane Smith", "Teknologi", 1));
+    library.addBook(new Book("B-003", "Desain Database", "Bob Brown", "Teknologi", 0));
 
-    // 4. Simulasi Transaksi Peminjaman
-    System.out.println("\n=== Simulasi Peminjaman Buku ===");
-    LocalDate today = LocalDate.now();
+    library.addMember(new Member("Andi", "M-001", "20230001"));
+    library.addMember(new Member("Siti", "M-002", "20230005"));
+    library.addMember(new Member("Agus", "M-003", "20230008"));
+  }
 
-    // Uji coba: Member1 meminjam buku B-001 dan B-002
-    System.out.println("\n-> Andi meminjam 2 buku:");
-    library.borrowBook("M-001", "B-001", today);
-    library.borrowBook("M-001", "B-002", today);
+  private static void tambahBuku(Scanner scanner, Library library) {
+    System.out.print("Kode Buku: ");
+    String kode = scanner.nextLine();
+    System.out.print("Judul: ");
+    String judul = scanner.nextLine();
+    System.out.print("Penulis: ");
+    String penulis = scanner.nextLine();
+    System.out.print("Kategori: ");
+    String kategori = scanner.nextLine();
+    System.out.print("Stok: ");
+    int stok = scanner.nextInt();
+    scanner.nextLine();
 
-    System.out.println("\n-> Andi mencoba meminjam buku ke-3:");
-    library.borrowBook("M-001", "B-002", today); // Buku bebas apa saja
+    library.addBook(new Book(kode, judul, penulis, kategori, stok));
+  }
 
-    System.out.println("\n-> Siti mencoba meminjam buku yang stoknya kosong:");
-    library.borrowBook("M-002", "B-003", today);
+  private static void tambahMember(Scanner scanner, Library library) {
+    System.out.print("Nama: ");
+    String nama = scanner.nextLine();
+    System.out.print("ID Member: ");
+    String id = scanner.nextLine();
+    System.out.print("NIM: ");
+    String nim = scanner.nextLine();
 
-    System.out.println("\n-> Siti mencoba meminjam buku B-002 (Stok saat ini 0 karena dipinjam Andi):");
-    library.borrowBook("M-002", "B-002", today);
+    library.addMember(new Member(nama, id, nim));
+  }
 
-    library.printLibraryStatus();
+  private static void peminjaman(Scanner scanner, Library library) {
+    System.out.print("ID Member: ");
+    String memberId = scanner.nextLine();
+    System.out.print("Kode Buku: ");
+    String bookCode = scanner.nextLine();
 
-    System.out.println("\n=== Simulasi Pengembalian Buku ===");
+    library.borrowBook(memberId, bookCode, LocalDate.now());
+  }
 
-    // Tepat waktu (Tidak ada denda)
-    System.out.println("\n-> Andi mengembalikan buku B-001 (Tepat Waktu):");
-    LocalDate returnDateOntime = today.plusDays(5);
-    library.returnBook("M-001", "B-001", returnDateOntime);
+  private static void pengembalian(Scanner scanner, Library library) {
+    System.out.print("ID Member: ");
+    String memberId = scanner.nextLine();
+    System.out.print("Kode Buku: ");
+    String bookCode = scanner.nextLine();
 
-    // Terlambat (Terkena denda)
-    System.out.println("\n-> Andi mengembalikan buku B-002 (Terlambat 3 hari):");
-    LocalDate returnDateLate = today.plusDays(10);
-    library.returnBook("M-001", "B-002", returnDateLate);
-
-    library.printLibraryStatus();
-
-    System.out.println("=== Simulasi Selesai ===");
+    library.returnBook(memberId, bookCode, LocalDate.now());
   }
 }
