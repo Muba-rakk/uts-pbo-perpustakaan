@@ -6,7 +6,7 @@ import java.util.List;
 public class Member extends Person {
   private String nim;
   private int maxBorrow;
-  private List<Loan> activeLoans;
+  private transient List<Loan> activeLoans;
 
   public Member(String name, String id, String nim) {
     super(name, id);
