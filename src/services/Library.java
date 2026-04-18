@@ -1,30 +1,96 @@
 package services;
 
+import java.io.File;
+import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gson.reflect.TypeToken;
+
 import models.Book;
 import models.Loan;
 import models.Member;
+import utils.JsonHelper;
 
 public class Library {
   private List<Book> books;
   private List<Member> members;
   private List<Loan> loans;
 
+  // Path untuk file JSON
+  private static final String DATA_DIR = "data";
+  private static final String BOOKS_FILE = DATA_DIR + "/books.json";
+  private static final String MEMBERS_FILE = DATA_DIR + "/members.json";
+  private static final String LOANS_FILE = DATA_DIR + "/loans.json";
+
   public Library() {
-    this.books = new ArrayList<>();
-    this.members = new ArrayList<>();
-    this.loans = new ArrayList<>();
+    // Inisialisasi folder data jika belum ada
+    new File(DATA_DIR).mkdirs();
+
+    // Load data dari JSON saat aplikasi dimulai
+    this.books = loadBooks();
+    this.members = loadMembers();
+    this.loans = loadLoans();
+
+    // Re-link active loans untuk setiap member berdasarkan data loans
+    linkActiveLoans();
   }
 
+  // Method Load Data dari JSON
+
+  private List<Book> loadBooks() {
+    Type bookListType = new TypeToken<List<Book>>() {
+    }.getType();
+    return JsonHelper.loadListFromJson(BOOKS_FILE, bookListType);
+  }
+
+  private List<Member> loadMembers() {
+    Type memberListType = new TypeToken<List<Member>>() {
+    }.getType();
+    return JsonHelper.loadListFromJson(MEMBERS_FILE, memberListType);
+  }
+
+  private List<Loan> loadLoans() {
+    Type loanListType = new TypeToken<List<Loan>>() {
+    }.getType();
+    return JsonHelper.loadListFromJson(LOANS_FILE, loanListType);
+  }
+
+  private void linkActiveLoans() {
+    // Menghubungkan kembali active loans ke objek Member (agar tidak null)
+    for (Member member : members) {
+      List<Loan> memberActiveLoans = new ArrayList<>();
+      for (Loan loan : loans) {
+        if (loan.getMember().getId().equals(member.getId()) && !loan.isReturned()) {
+          memberActiveLoans.add(loan);
+        }
+      }
+    }
+  }
+
+  // Method Save Data ke JSON
+  private void saveBooks() {
+    JsonHelper.saveListToJson(books, BOOKS_FILE);
+  }
+
+  private void saveMembers() {
+    JsonHelper.saveListToJson(members, MEMBERS_FILE);
+  }
+
+  private void saveLoans() {
+    JsonHelper.saveListToJson(loans, LOANS_FILE);
+  }
+
+  // Method Utama
   public void addBook(Book book) {
     books.add(book);
+    saveBooks();
   }
 
   public void addMember(Member member) {
     members.add(member);
+    saveMembers();
   }
 
   private Member findMemberById(String id) {
@@ -59,8 +125,16 @@ public class Library {
       return;
     }
 
+    // Hitung jumlah pinjaman aktif dari list loans global
+    int activeLoanCount = 0;
+    for (Loan loan : loans) {
+      if (loan.getMember().getId().equals(memberId) && !loan.isReturned()) {
+        activeLoanCount++;
+      }
+    }
+
     // Cek batas pinjaman berdasarkan aturan NIM
-    if (member.getActiveLoans().size() >= member.getMaxBorrow()) {
+    if (activeLoanCount >= member.getMaxBorrow()) {
       System.out.println("Gagal: Member " + member.getName() + " telah mencapai batas maksimal peminjaman ("
           + member.getMaxBorrow() + " buku).");
       return;
@@ -75,7 +149,10 @@ public class Library {
     // Buat transaksi peminjaman baru
     Loan newLoan = new Loan(member, book, borrowDate);
     loans.add(newLoan);
-    member.getActiveLoans().add(newLoan);
+
+    // Langsung simpan ke JSON setelah transaksi
+    saveLoans();
+    saveBooks(); // Perubahan stick buku
 
     System.out.println("Sukses: " + member.getName() + " berhasil meminjam buku '" + book.getTitle() + "'.");
     System.out.println("Tanggal Jatuh Tempo: " + newLoan.getDueDate());
@@ -91,8 +168,10 @@ public class Library {
 
     // Cari pinjaman aktif untuk buku ini oleh member ini
     Loan activeLoanToReturn = null;
-    for (Loan loan : member.getActiveLoans()) {
-      if (loan.getBook().getBookCode().equals(bookCode) && !loan.isReturned()) {
+    for (Loan loan : loans) {
+      if (loan.getMember().getId().equals(memberId) &&
+          loan.getBook().getBookCode().equals(bookCode) &&
+          !loan.isReturned()) {
         activeLoanToReturn = loan;
         break;
       }
@@ -107,7 +186,10 @@ public class Library {
     // Proses pengembalian
     activeLoanToReturn.completeLoan(returnDate);
     activeLoanToReturn.getBook().increaseStock();
-    member.getActiveLoans().remove(activeLoanToReturn);
+
+    // Langsung simpan ke JSON setelah transaksi
+    saveLoans();
+    saveBooks(); // Perubahan stock buku
 
     System.out.println("Sukses: Buku '" + activeLoanToReturn.getBook().getTitle() + "' berhasil dikembalikan oleh "
         + member.getName() + ".");
@@ -130,8 +212,15 @@ public class Library {
     }
     System.out.println("\nDaftar Member:");
     for (Member member : members) {
+      // Hitung active loans dari loans list
+      int activeCount = 0;
+      for (Loan loan : loans) {
+        if (loan.getMember().getId().equals(member.getId()) && !loan.isReturned()) {
+          activeCount++;
+        }
+      }
       System.out.println("- " + member.getId() + " | " + member.getName() + " | NIM: " + member.getNim()
-          + " | Max Pinjam: " + member.getMaxBorrow() + " | Sedang dipinjam: " + member.getActiveLoans().size());
+          + " | Max Pinjam: " + member.getMaxBorrow() + " | Sedang dipinjam: " + activeCount);
     }
     System.out.println("---------------------------\n");
   }
