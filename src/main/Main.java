@@ -7,19 +7,21 @@ import models.Book;
 import models.Member;
 import services.Library;
 
+// Entry point program
 public class Main {
   public static void main(String[] args) {
     System.out.println("=== Sistem Manajemen Perpustakaan ===");
 
+    // Inisialisasi library dan scanner
     Library library = new Library();
     Scanner scanner = new Scanner(System.in);
 
-    // Load atau seed data
+    // Load data dari JSON, jika kosong lakukan seeding data awal
     if (library.isBooksEmpty() || library.isMembersEmpty()) {
       seedData(library);
     }
 
-    // Menu Utama
+    // Menu Utama - loop sampai user memilih 0 (keluar)
     int pilihan;
     do {
       System.out.println("\n--- Menu ---");
@@ -33,6 +35,7 @@ public class Main {
       pilihan = scanner.nextInt();
       scanner.nextLine();
 
+      // Proses pilihan menu
       switch (pilihan) {
         case 1:
           tambahBuku(scanner, library);
@@ -49,22 +52,29 @@ public class Main {
         case 5:
           library.printLibraryStatus();
           break;
+        default:
+          if (pilihan != 0) {
+            System.out.println("Menu yang anda pilih invalid, pilih 0-5.");
+          }
+          break;
       }
     } while (pilihan != 0);
 
     System.out.println("Terima kasih!");
   }
 
+  // Menambahkan data dummy untuk inisialisasi pertama kali
   private static void seedData(Library library) {
-    library.addBook(new Book("B-001", "Pemrograman Java", "John Doe", "Teknologi", 3));
-    library.addBook(new Book("B-002", "Algoritma dan Struktur Data", "Jane Smith", "Teknologi", 1));
-    library.addBook(new Book("B-003", "Desain Database", "Bob Brown", "Teknologi", 0));
+    library.addBook(new Book("IF-001", "Pemrograman Java", "Winata Mubarak", "Teknologi dan Komputer", 3));
+    library.addBook(new Book("IF-002", "Algoritma dan Struktur Data", "John Smith", "Teknologi dan Komputer", 1));
+    library.addBook(new Book("iF-003", "Desain Database", "Luffy D Roger", "Teknologi dan Komputer", 5));
 
     library.addMember(new Member("Andi", "M-001", "20230001"));
     library.addMember(new Member("Siti", "M-002", "20230005"));
     library.addMember(new Member("Agus", "M-003", "20230008"));
   }
 
+  // Input data buku baru dari user
   private static void tambahBuku(Scanner scanner, Library library) {
     System.out.print("Kode Buku: ");
     String kode = scanner.nextLine();
@@ -81,6 +91,7 @@ public class Main {
     library.addBook(new Book(kode, judul, penulis, kategori, stok));
   }
 
+  // Input data member baru dari user
   private static void tambahMember(Scanner scanner, Library library) {
     System.out.print("Nama: ");
     String nama = scanner.nextLine();
@@ -92,6 +103,7 @@ public class Main {
     library.addMember(new Member(nama, id, nim));
   }
 
+  // Proses peminjaman buku
   private static void peminjaman(Scanner scanner, Library library) {
     System.out.print("ID Member: ");
     String memberId = scanner.nextLine();
@@ -101,6 +113,7 @@ public class Main {
     library.borrowBook(memberId, bookCode, LocalDate.now());
   }
 
+  // Proses pengembalian buku
   private static void pengembalian(Scanner scanner, Library library) {
     System.out.print("ID Member: ");
     String memberId = scanner.nextLine();
