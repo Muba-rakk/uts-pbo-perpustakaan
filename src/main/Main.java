@@ -67,7 +67,7 @@ public class Main {
   private static void seedData(Library library) {
     library.addBook(new Book("IF-001", "Pemrograman Java", "Winata Mubarak", "Teknologi dan Komputer", 3));
     library.addBook(new Book("IF-002", "Algoritma dan Struktur Data", "John Smith", "Teknologi dan Komputer", 1));
-    library.addBook(new Book("iF-003", "Desain Database", "Luffy D Roger", "Teknologi dan Komputer", 5));
+    library.addBook(new Book("IF-003", "Desain Database", "Luffy D Roger", "Teknologi dan Komputer", 5));
 
     library.addMember(new Member("Andi", "M-001", "20230001"));
     library.addMember(new Member("Siti", "M-002", "20230005"));
