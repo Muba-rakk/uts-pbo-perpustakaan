@@ -17,66 +17,79 @@ public class Library {
   private List<Member> members;
   private List<Loan> loans;
 
+  // Lokasi file JSON untuk penyimpanan data
   private static final String DATA_DIR = "data";
   private static final String BOOKS_FILE = DATA_DIR + "/books.json";
   private static final String MEMBERS_FILE = DATA_DIR + "/members.json";
   private static final String LOANS_FILE = DATA_DIR + "/loans.json";
 
+  // Konstruktor - load data dari JSON saat inisialisasi
   public Library() {
-    new File(DATA_DIR).mkdirs();
+    new File(DATA_DIR).mkdirs(); // Buat folder data jika belum ada
     this.books = loadBooks();
     this.members = loadMembers();
     this.loans = loadLoans();
   }
 
+  // Load data buku dari file JSON
   private List<Book> loadBooks() {
     Type type = new TypeToken<List<Book>>() {
     }.getType();
     return JsonHelper.loadListFromJson(BOOKS_FILE, type);
   }
 
+  // Load data member dari file JSON
   private List<Member> loadMembers() {
     Type type = new TypeToken<List<Member>>() {
     }.getType();
     return JsonHelper.loadListFromJson(MEMBERS_FILE, type);
   }
 
+  // Load data peminjaman dari file JSON
   private List<Loan> loadLoans() {
     Type type = new TypeToken<List<Loan>>() {
     }.getType();
     return JsonHelper.loadListFromJson(LOANS_FILE, type);
   }
 
+  // Simpan data buku ke file JSON
   private void saveBooks() {
     JsonHelper.saveListToJson(books, BOOKS_FILE);
   }
 
+  // Simpan data member ke file JSON
   private void saveMembers() {
     JsonHelper.saveListToJson(members, MEMBERS_FILE);
   }
 
+  // Simpan data peminjaman ke file JSON
   private void saveLoans() {
     JsonHelper.saveListToJson(loans, LOANS_FILE);
   }
 
+  // Tambah buku baru ke koleksi
   public void addBook(Book book) {
     books.add(book);
     saveBooks();
   }
 
+  // Tambah member baru ke sistem
   public void addMember(Member member) {
     members.add(member);
     saveMembers();
   }
 
+  // Cek apakah daftar buku kosong
   public boolean isBooksEmpty() {
     return books.isEmpty();
   }
 
+  // Cek apakah daftar member kosong
   public boolean isMembersEmpty() {
     return members.isEmpty();
   }
 
+  // Cari member berdasarkan ID
   private Member findMemberById(String id) {
     for (Member m : members) {
       if (m.getId().equals(id))
@@ -85,6 +98,7 @@ public class Library {
     return null;
   }
 
+  // Cari buku berdasarkan kode
   private Book findBookByCode(String code) {
     for (Book b : books) {
       if (b.getBookCode().equals(code))
@@ -93,7 +107,9 @@ public class Library {
     return null;
   }
 
+  // Proses peminjaman buku
   public void borrowBook(String memberId, String bookCode, LocalDate borrowDate) {
+    // Validasi member dan buku ada
     Member member = findMemberById(memberId);
     Book book = findBookByCode(bookCode);
 
@@ -106,6 +122,7 @@ public class Library {
       return;
     }
 
+    // Hitung jumlah buku yang sedang dipinjam
     int activeLoanCount = 0;
     for (Loan loan : loans) {
       if (loan.getMember().getId().equals(memberId) && !loan.isReturned()) {
@@ -113,15 +130,18 @@ public class Library {
       }
     }
 
+    // Cek batas peminjaman berdasarkan NIM
     if (activeLoanCount >= member.getMaxBorrow()) {
       System.out.println("Gagal: Batas peminjaman tercapai.");
       return;
     }
+    // Cek stok tersedia
     if (!book.decreaseStock()) {
       System.out.println("Gagal: Stok habis.");
       return;
     }
 
+    // Buat transaksi baru dan simpan
     Loan newLoan = new Loan(member, book, borrowDate);
     loans.add(newLoan);
     saveLoans();
@@ -130,13 +150,16 @@ public class Library {
     System.out.println("Sukses: " + member.getName() + " meminjam " + book.getTitle());
   }
 
+  // Proses pengembalian buku
   public void returnBook(String memberId, String bookCode, LocalDate returnDate) {
+    // Validasi member ada
     Member member = findMemberById(memberId);
     if (member == null) {
       System.out.println("Gagal: Member tidak ditemukan.");
       return;
     }
 
+    // Cari transaksi peminjaman yang aktif
     Loan activeLoan = null;
     for (Loan loan : loans) {
       if (loan.getMember().getId().equals(memberId) &&
@@ -152,6 +175,7 @@ public class Library {
       return;
     }
 
+    // Proses pengembalian dan hitung denda jika telat
     activeLoan.completeLoan(returnDate);
     activeLoan.getBook().increaseStock();
     saveLoans();
@@ -163,11 +187,14 @@ public class Library {
     }
   }
 
+  // Tampilkan semua data buku dan member
   public void printLibraryStatus() {
     System.out.println("\n--- Status Perpustakaan ---");
+    // Tampilkan daftar buku
     for (Book b : books) {
       System.out.println(b.getBookCode() + " | " + b.getTitle() + " | Stok: " + b.getStock());
     }
+    // Tampilkan daftar member dan jumlah peminjaman aktif
     for (Member m : members) {
       int aktif = 0;
       for (Loan l : loans) {

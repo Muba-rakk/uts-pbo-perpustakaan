@@ -21,13 +21,12 @@ public class Loan {
     this.fine = 0.0;
   }
 
-  // Method Overloading 1: Denda dengan tarif default (misal Rp 1000 per hari
-  // keterlambatan)
+  // Method Overloading 1
   public void calculateFine(LocalDate returnDate) {
     calculateFine(returnDate, 1000.0); // Memanggil method overloading kedua
   }
 
-  // Method Overloading 2: Denda dengan tarif custom
+  // Method Overloading 2
   public void calculateFine(LocalDate returnDate, double finePerDay) {
     if (returnDate.isAfter(this.dueDate)) {
       long daysLate = ChronoUnit.DAYS.between(this.dueDate, returnDate);
@@ -40,7 +39,7 @@ public class Loan {
   public void completeLoan(LocalDate returnDate) {
     this.returnDate = returnDate;
     this.isReturned = true;
-    calculateFine(returnDate); // Menghitung denda secara otomatis saat dikembalikan (default)
+    calculateFine(returnDate); // Menghitung denda secara otomatis saat dikembalikan
   }
 
   // Overloaded completeLoan jika ingin menggunakan tarif denda custom
